@@ -15,7 +15,7 @@ export const navGroups: NavGroup[] = [
     label: "Student Corner",
     links: [
       { label: "Projects", href: "/student-corner/projects" },
-      { label: "AI Resume Builder", href: "/student-corner/resume-builder" },
+      { label: "Career Toolkit", href: "/student-corner/resume-builder" },
       { label: "Hall of Fame", href: "/student-corner/hall-of-fame" },
       { label: "Verify Certificate", href: "/student-corner/verify-certificate" },
       { label: "Campus Ambassador", href: "/student-corner/campus-ambassador" },

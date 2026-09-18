@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, setAccessToken, clearAccessToken } from "./api";
 
 export type AuthUser = {
   id: number;
@@ -14,13 +14,13 @@ type LoginResponse = {
   refreshToken: string;
 };
 
-const TOKEN_KEY = "ib_access_token";
 const USER_KEY = "ib_user";
 
-export async function login(email: string, password: string) {
-  const res = await api.post<LoginResponse>("/auth/login", { email, password });
+/** identifier can be an email address or a phone number. */
+export async function login(identifier: string, password: string) {
+  const res = await api.post<LoginResponse>("/auth/login", { identifier, password });
+  setAccessToken(res.accessToken);
   try {
-    localStorage.setItem(TOKEN_KEY, res.accessToken);
     localStorage.setItem(USER_KEY, JSON.stringify(res.user));
   } catch {
     // ignore storage errors
@@ -29,8 +29,8 @@ export async function login(email: string, password: string) {
 }
 
 export function logout() {
+  clearAccessToken();
   try {
-    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   } catch {
     // ignore storage errors
@@ -46,6 +46,32 @@ export function getStoredUser(): AuthUser | null {
   }
 }
 
-export function isStaffRole(role: AuthUser["role"]) {
-  return role === "HR" || role === "ADMIN";
+/** Patch the cached user (e.g. after editing your own profile) so the UI reflects it immediately. */
+export function updateStoredUser(patch: Partial<AuthUser>) {
+  const current = getStoredUser();
+  if (!current) return;
+  try {
+    localStorage.setItem(USER_KEY, JSON.stringify({ ...current, ...patch }));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+export function isAdminRole(role: AuthUser["role"]) {
+  return role === "ADMIN";
+}
+
+export function isCompanyRole(role: AuthUser["role"]) {
+  return role === "HR";
+}
+
+export function isStudentRole(role: AuthUser["role"]) {
+  return role === "STUDENT" || role === "ALUMNI";
+}
+
+/** Where to send a user right after login, based on their role. */
+export function dashboardPathFor(role: AuthUser["role"]) {
+  if (isAdminRole(role)) return "/staff/dashboard";
+  if (isCompanyRole(role)) return "/company/dashboard";
+  return "/student/dashboard";
 }

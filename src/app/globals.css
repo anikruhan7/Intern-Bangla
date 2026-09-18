@@ -3,23 +3,165 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 0.75rem;
+
+  --background: #fbfaff;
+  --foreground: #14101f;
+
+  --card: #ffffff;
+  --card-foreground: #14101f;
+
+  --primary: #1d4ed8;
+  --primary-foreground: #ffffff;
+
+  --secondary: #06b6d4;
+  --secondary-foreground: #042f2e;
+
+  --accent: #f59e0b;
+  --accent-foreground: #241a00;
+
+  --muted: #f0f4fb;
+  --muted-foreground: #5c667a;
+
+  --border: #dce4f5;
+  --ring: #1d4ed8;
+
+  --destructive: #e11d48;
+  --destructive-foreground: #ffffff;
+
+  /* Matches the Intern Bangla "IB" mark (navy -> blue -> sky). */
+  --gradient-brand: linear-gradient(135deg, #0f2f66 0%, #1d4ed8 40%, #3b82f6 70%, #60a5fa 100%);
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #000000;
+  --foreground: #f3f0ff;
+
+  --card: #0d0d0f;
+  --card-foreground: #f3f0ff;
+
+  --primary: #60a5fa;
+  --primary-foreground: #0b1936;
+
+  --secondary: #22d3ee;
+  --secondary-foreground: #032c30;
+
+  --accent: #fbbf24;
+  --accent-foreground: #241a00;
+
+  --muted: #10182b;
+  --muted-foreground: #9fb0d0;
+
+  --border: #1e2a47;
+  --ring: #60a5fa;
+
+  --destructive: #ff5a68;
+  --destructive-foreground: #2a0a10;
+
+  --gradient-brand: linear-gradient(135deg, #1e3a8a 0%, #2563eb 40%, #3b82f6 70%, #93c5fd 100%);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
+  --font-numeric: var(--font-numeric);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+.brand-gradient-text {
+  background: var(--gradient-brand);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.brand-gradient-bg {
+  background: var(--gradient-brand);
+}
+
+/* Colorful decorative glows: multiply darkens them nicely against light
+   backgrounds, screen brightens them against dark ones - without this a
+   single opacity value looks vivid in dark mode and washed out in light. */
+.aura-blob {
+  mix-blend-mode: multiply;
+}
+
+.dark .aura-blob {
+  mix-blend-mode: screen;
+}
+
+/* Glassmorphism surface used for the navbar and floating panels. */
+.glass-panel {
+  background: color-mix(in srgb, var(--background) 65%, transparent);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-color: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+/* A moving light sweep, used on primary CTAs for an "AI" glow feel. */
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-120%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-15deg);
+  }
+}
+
+.shimmer-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    color-mix(in srgb, white 55%, transparent) 50%,
+    transparent 100%
+  );
+  animation: shimmer-sweep 3.2s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

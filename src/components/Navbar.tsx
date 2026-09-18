@@ -1,19 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Menu, X, Sparkles } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { Button } from "./ui/button";
 import { navGroups, singleLinks } from "@/lib/nav";
+import { openTommy } from "@/lib/tommyEvents";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/80 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/80">
+    <header className="glass-panel sticky top-0 z-50 border-b">
       <nav aria-label="Main Navigation" className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" className="text-lg font-bold tracking-tight text-neutral-900 dark:text-white">
-          Intern Bangla
+        <Link href="/" className="flex items-center gap-2">
+          <span className="relative h-10 w-10 overflow-hidden rounded-full">
+            <Image
+              src="/brand/logo-icon.png"
+              alt="Intern Bangla"
+              fill
+              sizes="40px"
+              className="object-cover"
+              priority
+            />
+          </span>
+          <span className="text-lg font-extrabold tracking-tight">
+            Intern <span className="brand-gradient-text">Bangla</span>
+          </span>
         </Link>
 
         <div className="hidden items-center gap-1 lg:flex">
@@ -24,29 +41,37 @@ export function Navbar() {
               onMouseEnter={() => setOpenGroup(group.label)}
               onMouseLeave={() => setOpenGroup(null)}
             >
-              <button className="rounded-md px-3 py-2 text-sm font-medium text-neutral-700 hover:text-indigo-600 dark:text-neutral-200 dark:hover:text-indigo-400">
+              <button className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary">
                 {group.label}
               </button>
-              {openGroup === group.label && (
-                <div className="absolute left-0 top-full w-64 rounded-xl border border-neutral-200 bg-white p-2 shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
-                  {group.links.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="block rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <AnimatePresence>
+                {openGroup === group.label && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 top-full w-64 rounded-xl border border-border bg-card p-2 shadow-lg"
+                  >
+                    {group.links.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="block rounded-lg px-3 py-2 text-sm text-foreground/80 transition-colors hover:bg-muted hover:text-primary"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ))}
           {singleLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-neutral-700 hover:text-indigo-600 dark:text-neutral-200 dark:hover:text-indigo-400"
+              className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary"
             >
               {link.label}
             </Link>
@@ -54,64 +79,80 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
+          <button
+            onClick={openTommy}
+            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground/80 transition-colors hover:border-primary/50 hover:text-primary"
+          >
+            <Sparkles size={12} /> Tommy
+          </button>
           <ThemeToggle />
-          <Link
-            href="/staff/login"
-            className="rounded-md px-3 py-2 text-sm font-medium text-neutral-700 hover:text-indigo-600 dark:text-neutral-200 dark:hover:text-indigo-400"
-          >
-            Staff Login
+          <Link href="/login" className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary">
+            Login
           </Link>
-          <Link
-            href="/student/login"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-          >
-            Student Login
-          </Link>
+          <Button asChild size="sm" variant="gradient">
+            <Link href="/register">Register</Link>
+          </Button>
         </div>
 
         <button
           type="button"
           aria-label={open ? "Close Menu" : "Open Navigation Menu"}
           onClick={() => setOpen((v) => !v)}
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200 lg:hidden dark:border-neutral-700"
+          className="flex h-9 w-9 items-center justify-center rounded-md border border-border lg:hidden"
         >
-          {open ? "✕" : "☰"}
+          {open ? <X size={18} /> : <Menu size={18} />}
         </button>
       </nav>
 
-      {open && (
-        <div className="border-t border-neutral-200 px-6 py-4 lg:hidden dark:border-neutral-800">
-          {navGroups.map((group) => (
-            <div key={group.label} className="mb-3">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                {group.label}
-              </p>
-              {group.links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-2 text-sm text-neutral-700 dark:text-neutral-200"
-                >
-                  {link.label}
-                </Link>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-t border-border lg:hidden"
+          >
+            <div className="px-6 py-4">
+              {navGroups.map((group) => (
+                <div key={group.label} className="mb-3">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {group.label}
+                  </p>
+                  {group.links.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className="block rounded-lg px-2 py-2 text-sm text-foreground/80"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
               ))}
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => {
+                    openTommy();
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground/80"
+                >
+                  <Sparkles size={12} /> Tommy
+                </button>
+                <ThemeToggle />
+                <Link href="/login" className="text-sm font-medium text-foreground/80">
+                  Login
+                </Link>
+                <Button asChild size="sm" variant="gradient">
+                  <Link href="/register">Register</Link>
+                </Button>
+              </div>
             </div>
-          ))}
-          <div className="mt-4 flex items-center gap-3">
-            <ThemeToggle />
-            <Link href="/staff/login" className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
-              Staff Login
-            </Link>
-            <Link
-              href="/student/login"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Student Login
-            </Link>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

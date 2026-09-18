@@ -1,65 +1,62 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { getStoredUser, logout, isStaffRole, type AuthUser } from "@/lib/auth";
+import Link from "next/link";
+import { Users, Building2, Briefcase, GraduationCap } from "lucide-react";
+import { api } from "@/lib/api";
+import { getStoredUser } from "@/lib/auth";
+import { Card } from "@/components/ui/card";
+import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
+
+type Counts = { users: number; companies: number; internships: number; courses: number };
 
 export default function StaffDashboardPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [counts, setCounts] = useState<Counts | null>(null);
+  const user = getStoredUser();
 
   useEffect(() => {
-    const stored = getStoredUser();
-    if (!stored || !isStaffRole(stored.role)) {
-      router.replace("/staff/login");
-      return;
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync from localStorage on mount
-    setUser(stored);
-  }, [router]);
+    Promise.all([
+      api.get<unknown[]>("/user").catch(() => []),
+      api.get<unknown[]>("/company").catch(() => []),
+      api.get<unknown[]>("/internship").catch(() => []),
+      api.get<unknown[]>("/course").catch(() => []),
+    ]).then(([users, companies, internships, courses]) => {
+      setCounts({
+        users: users.length,
+        companies: companies.length,
+        internships: internships.length,
+        courses: courses.length,
+      });
+    });
+  }, []);
 
-  if (!user) return null;
+  const stats = [
+    { label: "Total Users", value: counts?.users, icon: Users, href: "/staff/users" },
+    { label: "Companies", value: counts?.companies, icon: Building2, href: "/staff/companies" },
+    { label: "Internships", value: counts?.internships, icon: Briefcase, href: "/staff/internships" },
+    { label: "Courses", value: counts?.courses, icon: GraduationCap, href: "/staff/courses" },
+  ];
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">Welcome back,</p>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-            {user.firstName} {user.lastName}
-          </h1>
-        </div>
-        <button
-          onClick={() => {
-            logout();
-            router.push("/staff/login");
-          }}
-          className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-200"
-        >
-          Logout
-        </button>
-      </div>
+      <p className="text-sm text-muted-foreground">Welcome back,</p>
+      <h1 className="text-2xl font-bold">{user?.firstName} {user?.lastName}</h1>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-white">Students</p>
-          <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-            Manage student enrollments and progress.
-          </p>
-        </div>
-        <div className="rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-white">Internships</p>
-          <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-            Review applications and internship listings.
-          </p>
-        </div>
-        <div className="rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-white">Companies</p>
-          <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-            Manage hiring partners and interview pipelines.
-          </p>
-        </div>
-      </div>
+      <RevealGroup className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map(({ label, value, icon: Icon, href }) => (
+          <RevealItem key={label}>
+            <Link href={href}>
+              <Card className="p-6 transition-colors hover:border-primary/50">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full brand-gradient-bg text-white">
+                  <Icon size={16} />
+                </span>
+                <p className="mt-4 text-2xl font-bold">{value ?? "…"}</p>
+                <p className="text-sm text-muted-foreground">{label}</p>
+              </Card>
+            </Link>
+          </RevealItem>
+        ))}
+      </RevealGroup>
     </div>
   );
 }

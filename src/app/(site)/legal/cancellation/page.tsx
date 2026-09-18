@@ -1,18 +1,35 @@
+import Link from "next/link";
+import { LegalPage } from "@/components/LegalPage";
+
 export default function Page() {
   return (
-    <section className="mx-auto max-w-5xl px-6 py-20">
-      <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-        Legal
+    <LegalPage title="Cancellation Policy" updated="September 2026">
+      <h2>1. Cancelling a Course Enrollment</h2>
+      <p>
+        You can cancel your enrollment in a self-paced course at any time from your student dashboard.
+        Cancelling a paid course follows our{" "}
+        <Link href="/legal/refund" className="text-primary hover:underline">Refund Policy</Link>.
       </p>
-      <h1 className="mt-2 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
-        Cancellation Policy
-      </h1>
-      <p className="mt-4 max-w-2xl text-neutral-600 dark:text-neutral-300">
-        Our policy on cancelling an enrollment.
+
+      <h2>2. Withdrawing from an Internship</h2>
+      <p>
+        If you need to withdraw from an internship you&apos;ve been accepted into, notify the host
+        company and Intern Bangla as early as possible. Repeated last-minute withdrawals or no-shows may
+        be reported as a complaint and reviewed by our admin team, which can result in a warning.
       </p>
-      <div className="mt-10 rounded-2xl border border-dashed border-neutral-300 p-10 text-center text-neutral-400 dark:border-neutral-700">
-        Coming soon
-      </div>
-    </section>
+
+      <h2>3. Companies Cancelling a Listing</h2>
+      <p>
+        A verified company may close or cancel an internship listing at any time from their dashboard.
+        Students who already applied will be notified that the listing was closed.
+      </p>
+
+      <h2>4. Account Cancellation</h2>
+      <p>
+        You may request full account deletion by contacting us via our{" "}
+        <Link href="/contact" className="text-primary hover:underline">Contact page</Link>. Note that records
+        tied to an active complaint or ban may be retained as described in our Privacy Policy.
+      </p>
+    </LegalPage>
   );
 }
