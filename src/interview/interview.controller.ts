@@ -29,11 +29,14 @@ export class InterviewController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.HR) //Admin //HR
   findAll() {
     return this.interviewsService.findAll();
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.interviewsService.findOne(id);
   }

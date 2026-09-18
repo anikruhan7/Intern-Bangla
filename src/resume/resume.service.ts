@@ -14,6 +14,7 @@ export class ResumeService {
   async createResume(
     createResumeDto: CreateResumeDto,
     file: Express.Multer.File,
+    studentId: number,
   ): Promise<Resume> {
     let parsedSkills = createResumeDto.skills;
     if (typeof parsedSkills === 'string') {
@@ -26,10 +27,17 @@ export class ResumeService {
       title: createResumeDto.title,
       skills: parsedSkills,
       fileUrl: file.path,
-      student: { id: createResumeDto.studentId },
+      student: { id: studentId },
     });
 
     return await this.resumeRepo.save(resume);
+  }
+
+  async getResumesForStudent(studentId: number): Promise<Resume[]> {
+    return await this.resumeRepo.find({
+      where: { student: { id: studentId } },
+      select: { id: true, title: true, fileUrl: true, skills: true, createDate: true },
+    });
   }
 
   async getAllResumes(): Promise<Resume[]> {

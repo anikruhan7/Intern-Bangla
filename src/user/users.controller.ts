@@ -19,9 +19,10 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { ModerateUserDto } from './dto/moderate-user.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { User, UserRole } from './entities/user.entity';
+import { User, UserRole, VerificationStatus } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
@@ -49,7 +50,7 @@ export class UsersController {
         }
       },
       limits: {
-        fileSize: 15 * 1024 * 1024,
+        fileSize: 2 * 1024 * 1024, // 2MB max for profile images
       },
     }),
   )
@@ -108,7 +109,7 @@ export class UsersController {
         }
       },
       limits: {
-        fileSize: 15 * 1024 * 1024,
+        fileSize: 2 * 1024 * 1024, // 2MB max for profile images
       },
     }),
   )
@@ -124,6 +125,10 @@ export class UsersController {
     if (file) {
       updateUserDto.profilePictureUrl = file.path;
     }
+    // Email changes always go through /auth/request-email-change +
+    // /auth/confirm-email-change instead, so the address is verified
+    // before it takes effect - never applied directly from this endpoint.
+    delete updateUserDto.email;
     return this.usersService.update(id, updateUserDto);
   }
 
@@ -132,5 +137,46 @@ export class UsersController {
   @Roles(UserRole.ADMIN) //Admin
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
+  }
+
+  @Patch(':id/warn')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  warn(@Param('id', ParseIntPipe) id: number, @Body() dto: ModerateUserDto) {
+    return this.usersService.warn(id, dto.reason);
+  }
+
+  @Patch(':id/ban')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  ban(@Param('id', ParseIntPipe) id: number, @Body() dto: ModerateUserDto) {
+    return this.usersService.ban(id, dto.reason);
+  }
+
+  @Patch(':id/lift-ban')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  liftBan(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.liftBan(id);
+  }
+
+  @Patch(':id/resolve-appeal')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  resolveAppeal(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('approve') approve: boolean,
+  ) {
+    return this.usersService.resolveAppeal(id, approve);
+  }
+
+  @Patch(':id/verify')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  verifyStudent(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.setVerificationStatus(
+      id,
+      VerificationStatus.VERIFIED,
+    );
   }
 }

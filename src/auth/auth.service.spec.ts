@@ -1,8 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuthService } from './auth.service';
 import { UsersService } from '../user/users.service';
+import { Company } from '../company/entities/company.entity';
+import { MailService } from '../mail/mail.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -17,6 +20,8 @@ describe('AuthService', () => {
           provide: ConfigService,
           useValue: { get: () => undefined, getOrThrow: () => 'test' },
         },
+        { provide: getRepositoryToken(Company), useValue: {} },
+        { provide: MailService, useValue: {} },
       ],
     }).compile();
 

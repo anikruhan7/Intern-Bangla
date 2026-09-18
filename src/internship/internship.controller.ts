@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { InternshipService } from './internship.service';
@@ -15,8 +16,9 @@ import { UpdateInternshipDto } from './dto/update-internship.dto';
 import { Internship } from './entities/internship.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { UserRole } from '../user/entities/user.entity';
+import { User, UserRole } from '../user/entities/user.entity';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { GetUser } from '../auth/decorators/get-user.decorator';
 
 @Controller('internship')
 export class InternshipController {
@@ -27,8 +29,22 @@ export class InternshipController {
   @Roles(UserRole.HR, UserRole.ADMIN) //HR //Admin
   createInternship(
     @Body() createInternshipDto: CreateInternshipDto,
+    @GetUser() user: User,
   ): Promise<Internship> {
-    return this.internshipService.createInternship(createInternshipDto);
+    return this.internshipService.createInternship(createInternshipDto, user);
+  }
+
+  @Get('mine')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.HR, UserRole.ADMIN) //HR //Admin
+  getMineInternships(
+    @GetUser() user: User,
+    @Query('companyId') companyId?: string,
+  ): Promise<Internship[]> {
+    return this.internshipService.getInternshipsMine(
+      user,
+      companyId ? Number(companyId) : undefined,
+    );
   }
 
   @Get()
@@ -49,14 +65,22 @@ export class InternshipController {
   updateInternship(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateInternshipDto: UpdateInternshipDto,
+    @GetUser() user: User,
   ): Promise<Internship> {
-    return this.internshipService.updateInternship(id, updateInternshipDto);
+    return this.internshipService.updateInternship(
+      id,
+      updateInternshipDto,
+      user,
+    );
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.HR, UserRole.ADMIN) //HR //Admin
-  deleteInternship(@Param('id', ParseIntPipe) id: number): Promise<string> {
-    return this.internshipService.deleteInternship(id);
+  deleteInternship(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: User,
+  ): Promise<string> {
+    return this.internshipService.deleteInternship(id, user);
   }
 }

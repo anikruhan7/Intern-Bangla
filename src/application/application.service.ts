@@ -16,6 +16,13 @@ import { User, UserRole } from '../user/entities/user.entity';
 import { ApplicationStatus } from '../common/enums/application-status.enum';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 
+const DETAIL_RELATIONS = {
+  student: true,
+  internship: { company: true },
+  resume: true,
+  referredBy: true,
+} as const;
+
 @Injectable()
 export class ApplicationService {
   constructor(
@@ -107,14 +114,31 @@ export class ApplicationService {
     return await this.applicationRepo.save(application);
   }
 
-  async findAllApplications(): Promise<Application[]> {
+  /** HR sees only applications to their own company's internships; admin sees all. */
+  async findAllApplications(actingUser: User): Promise<Application[]> {
+    if (actingUser.role === UserRole.ADMIN) {
+      return await this.applicationRepo.find({
+        relations: DETAIL_RELATIONS,
+        order: { createdAt: 'DESC' },
+      });
+    }
+
+    const companyId = await this.userService.getCompanyIdForUser(actingUser.id);
+    if (!companyId) {
+      return [];
+    }
     return await this.applicationRepo.find({
-      relations: {
-        student: true,
-        internship: true,
-        resume: true,
-        referredBy: true,
-      },
+      where: { internship: { company: { id: companyId } } },
+      relations: DETAIL_RELATIONS,
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findMineForStudent(studentId: number): Promise<Application[]> {
+    return await this.applicationRepo.find({
+      where: { student: { id: studentId } },
+      relations: DETAIL_RELATIONS,
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -123,12 +147,7 @@ export class ApplicationService {
       where: {
         id,
       },
-      relations: {
-        student: true,
-        internship: true,
-        resume: true,
-        referredBy: true,
-      },
+      relations: DETAIL_RELATIONS,
     });
 
     if (!application) {
@@ -137,11 +156,38 @@ export class ApplicationService {
     return application;
   }
 
+  /** Student who owns it, HR from the owning company, or admin. */
+  async findByIdForViewer(id: number, viewer: User): Promise<Application> {
+    const application = await this.findById(id);
+    if (viewer.role === UserRole.ADMIN) return application;
+    if (application.student.id === viewer.id) return application;
+    if (viewer.role === UserRole.HR) {
+      const companyId = await this.userService.getCompanyIdForUser(viewer.id);
+      if (companyId && application.internship.company.id === companyId) {
+        return application;
+      }
+    }
+    throw new ForbiddenException('You cannot view this application');
+  }
+
   async updateStatus(
     dto: UpdateApplicationDto,
     id: number,
+    actingUser: User,
   ): Promise<Application> {
     const application = await this.findById(id);
+
+    if (actingUser.role !== UserRole.ADMIN) {
+      const companyId = await this.userService.getCompanyIdForUser(
+        actingUser.id,
+      );
+      if (!companyId || application.internship.company.id !== companyId) {
+        throw new ForbiddenException(
+          "You can only review applications to your own company's internships",
+        );
+      }
+    }
+
     application.status = dto.status;
     return await this.applicationRepo.save(application);
   }

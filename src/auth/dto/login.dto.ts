@@ -1,9 +1,10 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class LoginDto {
-  @IsEmail({}, { message: 'Invalid email address' })
-  @IsNotEmpty({ message: 'Email is required' })
-  email: string;
+  /** Either an email address or a phone number - AuthService figures out which. */
+  @IsString()
+  @IsNotEmpty({ message: 'Email or phone number is required' })
+  identifier: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Password is required' })

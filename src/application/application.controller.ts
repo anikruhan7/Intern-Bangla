@@ -29,15 +29,21 @@ export class ApplicationController {
     return this.applicationService.createApplication(dto, user.id);
   }
 
+  @Get('mine')
+  @Roles(UserRole.STUDENT) //Student
+  findMine(@GetUser() user: User) {
+    return this.applicationService.findMineForStudent(user.id);
+  }
+
   @Get()
   @Roles(UserRole.HR, UserRole.ADMIN) //HR //Admin
-  findAllApplications() {
-    return this.applicationService.findAllApplications();
+  findAllApplications(@GetUser() user: User) {
+    return this.applicationService.findAllApplications(user);
   }
 
   @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.applicationService.findById(id);
+  findById(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
+    return this.applicationService.findByIdForViewer(id, user);
   }
 
   @Patch(':id')
@@ -45,8 +51,9 @@ export class ApplicationController {
   updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateApplicationDto,
+    @GetUser() user: User,
   ) {
-    return this.applicationService.updateStatus(dto, id);
+    return this.applicationService.updateStatus(dto, id, user);
   }
 
   @Delete(':id')

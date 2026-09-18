@@ -1,13 +1,8 @@
-import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
+// Deliberately no studentId here - a resume always belongs to whoever is
+// authenticated when it's created (see ResumeController), never a
+// client-supplied id, or any student could attach a resume to someone else.
 export class CreateResumeDto {
   @IsString()
   @IsNotEmpty()
@@ -18,9 +13,4 @@ export class CreateResumeDto {
   @IsOptional()
   @IsString({ each: true })
   skills?: string[];
-
-  @IsInt()
-  @IsNotEmpty()
-  @Type(() => Number)
-  studentId: number;
 }

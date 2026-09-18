@@ -10,6 +10,12 @@ import {
 import { Internship } from '../../internship/entities/internship.entity';
 import { User } from '../../user/entities/user.entity';
 
+export enum CompanyVerificationStatus {
+  PENDING = 'PENDING',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED',
+}
+
 @Entity()
 export class Company {
   @PrimaryGeneratedColumn()
@@ -40,6 +46,33 @@ export class Company {
     default: false,
   })
   isVerified: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: CompanyVerificationStatus,
+    default: CompanyVerificationStatus.PENDING,
+  })
+  verificationStatus: CompanyVerificationStatus;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  address: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  city: string | null;
+
+  // Platform is Bangladesh-only for now - every company must be located here.
+  @Column({ type: 'varchar', length: 50, default: 'Bangladesh' })
+  country: string;
+
+  // Path to an uploaded trade license / registration document (PDF or image).
+  @Column({ type: 'varchar', nullable: true })
+  identityDocumentUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  rejectionReason: string | null;
+
+  @Column({ type: Boolean, default: false })
+  banned: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

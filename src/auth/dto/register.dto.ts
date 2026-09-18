@@ -3,14 +3,20 @@ import {
   IsNotEmpty,
   IsString,
   MinLength,
+  MaxLength,
   IsOptional,
+  IsIn,
   Matches,
+  ValidateIf,
 } from 'class-validator';
 
-// Note: there is deliberately no `role` field here. Public self-registration
-// always creates a STUDENT account (see AuthService.register). Elevated
-// roles (HR, ADMIN) can only be granted by an existing admin via the
-// admin-only user management endpoints, or by the one-time admin seed script.
+export type PublicAccountType = 'STUDENT' | 'COMPANY';
+
+// Note: `accountType` only ever selects between STUDENT and COMPANY (which
+// maps to the HR role internally). There is deliberately no way to request
+// ADMIN here - elevated admin access can only be granted via the one-time
+// admin seed script or by an existing admin through the user management
+// endpoints, never through public registration.
 export class RegisterDto {
   @IsString()
   @IsNotEmpty({ message: 'First name is required' })
@@ -33,6 +39,36 @@ export class RegisterDto {
     message: 'Password must contain at least one uppercase letter',
   })
   password!: string;
+
+  @IsIn(['STUDENT', 'COMPANY'], {
+    message: 'accountType must be STUDENT or COMPANY',
+  })
+  @IsOptional()
+  accountType?: PublicAccountType;
+
+  @ValidateIf((dto: RegisterDto) => dto.accountType === 'COMPANY')
+  @IsString()
+  @IsNotEmpty({ message: 'Company name is required for a company account' })
+  @MaxLength(100)
+  companyName?: string;
+
+  @ValidateIf((dto: RegisterDto) => dto.accountType === 'COMPANY')
+  @IsString()
+  @IsNotEmpty({ message: 'Industry is required for a company account' })
+  @MaxLength(50)
+  industry?: string;
+
+  @ValidateIf((dto: RegisterDto) => dto.accountType === 'COMPANY')
+  @IsString()
+  @IsNotEmpty({ message: 'Address is required for a company account' })
+  @MaxLength(255)
+  companyAddress?: string;
+
+  @ValidateIf((dto: RegisterDto) => dto.accountType === 'COMPANY')
+  @IsString()
+  @IsNotEmpty({ message: 'City is required for a company account' })
+  @MaxLength(100)
+  companyCity?: string;
 
   @IsString()
   @IsOptional()

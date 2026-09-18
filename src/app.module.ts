@@ -18,6 +18,8 @@ import { EventModule } from './event/event.module';
 import { PaymentModule } from './payment/payment.module';
 import { CertificateModule } from './certificate/certificate.module';
 import { CampusAmbassadorModule } from './campus-ambassador/campus-ambassador.module';
+import { ComplaintModule } from './complaint/complaint.module';
+import { TommyModule } from './tommy/tommy.module';
 
 @Module({
   imports: [
@@ -60,6 +62,8 @@ import { CampusAmbassadorModule } from './campus-ambassador/campus-ambassador.mo
     PaymentModule,
     CertificateModule,
     CampusAmbassadorModule,
+    ComplaintModule,
+    TommyModule,
   ],
   controllers: [AppController],
   providers: [
