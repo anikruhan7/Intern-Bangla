@@ -1,4 +1,5 @@
 import { setDefaultResultOrder } from 'dns';
+import { setDefaultAutoSelectFamily } from 'net';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -8,11 +9,16 @@ import { AppModule } from './app.module';
 
 // This host's network has broken/unreliable IPv6 routing to at least Gmail's
 // SMTP servers (observed ENETUNREACH and connection timeouts connecting to
-// their IPv6 addresses) - Node resolves dual-stack hosts to IPv6 first by
-// default, so outbound SMTP kept intermittently failing outright instead of
-// falling back to the working IPv4 route. Forcing IPv4-first resolution
-// avoids the broken path entirely.
+// their IPv6 addresses). Setting the DNS result order alone wasn't enough -
+// Node's "Happy Eyeballs" (RFC 8305) autoSelectFamily still raced an IPv6
+// attempt in parallel even with IPv4 preferred first, and that IPv6 attempt
+// was the one failing. Disabling autoSelectFamily makes net.connect() use a
+// single attempt with the (now IPv4-first) dns.lookup() order instead,
+// avoiding the broken IPv6 path entirely.
 setDefaultResultOrder('ipv4first');
+if (typeof setDefaultAutoSelectFamily === 'function') {
+  setDefaultAutoSelectFamily(false);
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
