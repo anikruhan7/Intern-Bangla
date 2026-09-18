@@ -29,19 +29,34 @@ import { TommyModule } from './tommy/tommy.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.getOrThrow<string>('DB_HOST'),
-        port: config.get<number>('DB_PORT', 5432),
-        username: config.getOrThrow<string>('DB_USERNAME'),
-        password: config.getOrThrow<string>('DB_PASSWORD'),
-        database: config.getOrThrow<string>('DB_NAME'),
-        autoLoadEntities: true,
-        // Never enable schema auto-sync in production - use migrations instead.
-        synchronize:
-          config.get<string>('NODE_ENV') !== 'production' &&
-          config.get<string>('DB_SYNCHRONIZE') === 'true',
-      }),
+      useFactory: (config: ConfigService) => {
+        // A single connection string (e.g. from Neon, Supabase, Render
+        // Postgres) takes priority when set - simpler to configure on a
+        // host than five separate DB_* vars. Falls back to those for local
+        // Docker Postgres, which has no TLS.
+        const databaseUrl = config.get<string>('DATABASE_URL');
+
+        const base = databaseUrl
+          ? { url: databaseUrl, ssl: { rejectUnauthorized: false } }
+          : {
+              host: config.getOrThrow<string>('DB_HOST'),
+              port: config.get<number>('DB_PORT', 5432),
+              username: config.getOrThrow<string>('DB_USERNAME'),
+              password: config.getOrThrow<string>('DB_PASSWORD'),
+              database: config.getOrThrow<string>('DB_NAME'),
+            };
+
+        return {
+          type: 'postgres' as const,
+          ...base,
+          autoLoadEntities: true,
+          // Never enable schema auto-sync in production - use `npm run
+          // db:sync` once instead (see scripts/sync-schema.ts).
+          synchronize:
+            config.get<string>('NODE_ENV') !== 'production' &&
+            config.get<string>('DB_SYNCHRONIZE') === 'true',
+        };
+      },
     }),
     ThrottlerModule.forRoot([
       {
