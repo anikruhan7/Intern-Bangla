@@ -23,7 +23,7 @@ export const knowledgeBase: KnowledgeEntry[] = [
     title: "Logging In",
     url: "/login",
     answer:
-      "Log in with either your email or phone number, plus your password. If you forget your password, use 'Forgot password?' on the login page - it sends a reset link. Passwords can also be changed anytime from My Account once logged in.",
+      "Log in with either your email or phone number, plus your password. If you forget your password, use 'Forgot password?' on the login page - it emails you a 6-digit code that's valid for 1 minute. Passwords can also be changed anytime from My Account once logged in.",
   },
   {
     keywords: ["internship", "apply", "stipend", "salary", "pay", "how much"],
@@ -103,7 +103,7 @@ export const knowledgeBase: KnowledgeEntry[] = [
     title: "Contact Us",
     url: "/contact",
     answer:
-      "You can reach Intern Bangla via the Contact page, by phone at +880 1615-002383, or by email at ruhananik.bd@gmail.com. We're based in Bashundhara R/A, Dhaka.",
+      "You can reach Intern Bangla via the Contact page, by phone at +880 1615-002383, or by email at internbangla@gmail.com. We're based in Bashundhara R/A, Dhaka.",
   },
   {
     keywords: ["refund", "cancel", "cancellation"],
