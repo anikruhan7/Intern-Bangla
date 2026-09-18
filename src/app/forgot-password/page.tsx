@@ -15,7 +15,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 type Step = "email" | "otp" | "done";
 
 // Matches the backend's OTP_TTL_MS (src/auth/auth.service.ts) - keep in sync.
-const OTP_SECONDS = 60;
+const OTP_SECONDS = 300;
+
+function formatCountdown(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -139,7 +145,7 @@ export default function ForgotPasswordPage() {
                   <div className="flex items-center justify-between">
                     <Label htmlFor="forgot-otp">6-Digit Code</Label>
                     {secondsLeft > 0 ? (
-                      <span className="text-xs text-muted-foreground">Expires in {secondsLeft}s</span>
+                      <span className="text-xs text-muted-foreground">Expires in {formatCountdown(secondsLeft)}</span>
                     ) : (
                       <span className="text-xs font-medium text-destructive">Code expired</span>
                     )}
