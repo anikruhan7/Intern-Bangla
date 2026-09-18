@@ -27,7 +27,13 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RequestEmailChangeDto } from './dto/request-email-change.dto';
 import { ConfirmEmailChangeDto } from './dto/confirm-email-change.dto';
 
-const OTP_TTL_MS = 60 * 1000; // 1 minute
+// Raw Gmail SMTP delivery from this host has been observed taking up to ~2
+// minutes (likely outbound SMTP being slow/throttled on the free hosting
+// tier) - 5 minutes gives real margin so the code doesn't expire before the
+// email even arrives. Switching to an HTTP-based transactional email
+// provider (e.g. Resend) would deliver in seconds and let this shrink back
+// down safely.
+const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function generateOtp(): string {
   return crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');
@@ -249,15 +255,14 @@ export class AuthService {
 
     await this.usersService.setResetToken(user.id, hashOtp(otp), expiresAt);
 
-    try {
-      await this.mailService.sendPasswordResetOtp(
-        user.email,
-        user.firstName || 'there',
-        otp,
+    // Never make the caller wait on the SMTP round-trip (it can take a long
+    // time, or hang, depending on the network path) - fire it and respond
+    // immediately. Errors are still logged.
+    this.mailService
+      .sendPasswordResetOtp(user.email, user.firstName || 'there', otp)
+      .catch((error) =>
+        console.error('Failed to send password reset email:', error),
       );
-    } catch (error) {
-      console.error('Failed to send password reset email:', error);
-    }
 
     return { message: `A verification code has been sent to ${user.email}.` };
   }
@@ -299,15 +304,11 @@ export class AuthService {
       expiresAt,
     );
 
-    try {
-      await this.mailService.sendEmailChangeOtp(
-        newEmail,
-        user.firstName || 'there',
-        otp,
+    this.mailService
+      .sendEmailChangeOtp(newEmail, user.firstName || 'there', otp)
+      .catch((error) =>
+        console.error('Failed to send email change verification:', error),
       );
-    } catch (error) {
-      console.error('Failed to send email change verification:', error);
-    }
 
     return {
       message: `We sent a 6-digit code to ${newEmail}. Enter it to confirm the change.`,
