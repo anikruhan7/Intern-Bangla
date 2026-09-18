@@ -1,9 +1,18 @@
+import { setDefaultResultOrder } from 'dns';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+
+// This host's network has broken/unreliable IPv6 routing to at least Gmail's
+// SMTP servers (observed ENETUNREACH and connection timeouts connecting to
+// their IPv6 addresses) - Node resolves dual-stack hosts to IPv6 first by
+// default, so outbound SMTP kept intermittently failing outright instead of
+// falling back to the working IPv4 route. Forcing IPv4-first resolution
+// avoids the broken path entirely.
+setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
