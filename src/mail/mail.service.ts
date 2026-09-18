@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 
+interface SendResult {
+  messageId?: string;
+  response?: string;
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -12,7 +17,7 @@ export class MailService {
     // mailer falls back to a JSON transport that never actually delivers
     // this, so log the code too - otherwise there's no way to get it.
     this.logger.log(`Password reset OTP for ${userEmail}: ${otp}`);
-    const info = await this.mailerService.sendMail({
+    const info = (await this.mailerService.sendMail({
       to: userEmail,
       subject: `${otp} is your Intern Bangla password reset code`,
       html: `
@@ -21,9 +26,9 @@ export class MailService {
         <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px;">${otp}</p>
         <p>If you didn't request this, you can safely ignore this email.</p>
       `,
-    });
+    })) as SendResult;
     this.logger.log(
-      `Password reset email accepted by SMTP server for ${userEmail}: messageId=${info?.messageId} response="${info?.response}"`,
+      `Password reset email accepted by SMTP server for ${userEmail}: messageId=${info.messageId} response="${info.response}"`,
     );
   }
 
