@@ -9,6 +9,7 @@ import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { OtpInput } from "@/components/ui/otp-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Reveal } from "@/components/motion/Reveal";
@@ -124,14 +125,16 @@ export default function AccountPage() {
     }
   }
 
-  async function confirmEmailChange(e: React.FormEvent) {
-    e.preventDefault();
+  async function confirmEmailChange(e?: React.FormEvent, otpOverride?: string) {
+    e?.preventDefault();
+    const otpToUse = otpOverride ?? emailOtp;
+    if (otpToUse.length !== 6) return;
     setEmailMessage(null);
     setEmailError(null);
     setEmailSaving(true);
     try {
       const res = await api.post<{ message: string; email: string }>("/auth/confirm-email-change", {
-        otp: emailOtp,
+        otp: otpToUse,
       });
       setEmail(res.email);
       updateStoredUser({ email: res.email });
@@ -252,41 +255,42 @@ export default function AccountPage() {
             ) : (
               <form onSubmit={confirmEmailChange} className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Enter the 6-digit code sent to <span className="text-foreground">{newEmail}</span>.
+                  Enter the 6-digit code sent to <span className="text-foreground">{newEmail}</span>. It can
+                  take a minute or two to arrive.
                 </p>
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label>6-Digit Code</Label>
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-center gap-2 text-xs">
                     {emailSecondsLeft > 0 ? (
-                      <span className="text-xs text-muted-foreground">Expires in {formatCountdown(emailSecondsLeft)}</span>
+                      <span className="text-muted-foreground">
+                        Code expires in <span className="font-semibold text-foreground">{formatCountdown(emailSecondsLeft)}</span>
+                      </span>
                     ) : (
-                      <span className="text-xs font-medium text-destructive">Code expired</span>
+                      <span className="font-medium text-destructive">Code expired</span>
                     )}
                   </div>
-                  <Input
-                    inputMode="numeric"
-                    pattern="\d{6}"
-                    maxLength={6}
-                    required
-                    placeholder="••••••"
-                    className="h-14 max-w-[12rem] rounded-xl text-center text-2xl font-bold tracking-[0.6em]"
+                  <OtpInput
                     value={emailOtp}
-                    onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onChange={setEmailOtp}
+                    onComplete={(code) => confirmEmailChange(undefined, code)}
+                    disabled={emailSaving}
+                    autoFocus
                   />
                   {emailSecondsLeft <= 0 && (
-                    <button
-                      type="button"
-                      onClick={resendEmailOtp}
-                      disabled={emailSaving}
-                      className="text-sm font-medium text-primary hover:opacity-80"
-                    >
-                      Resend code
-                    </button>
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={resendEmailOtp}
+                        disabled={emailSaving}
+                        className="text-sm font-medium text-primary hover:opacity-80"
+                      >
+                        Resend code
+                      </button>
+                    </div>
                   )}
                 </div>
                 {emailError && <p className="text-sm text-destructive">{emailError}</p>}
                 {emailMessage && <p className="text-sm text-emerald-600 dark:text-emerald-400">{emailMessage}</p>}
-                <div className="flex gap-3">
+                <div className="flex justify-center gap-3">
                   <Button type="submit" variant="gradient" disabled={emailSaving}>
                     {emailSaving ? "Confirming…" : "Confirm Change"}
                   </Button>
